@@ -44,7 +44,12 @@ class L2Normalization(Layer):
     '''
 
     def __init__(self, gamma_init=20, **kwargs):
-        if K.image_dim_ordering() == 'tf':
+        # see: https://github.com/keras-team/keras/issues/12649#issuecomment-512267083
+        # https://github.com/keras-team/keras/blob/2.2.5/keras/backend/common.py#L213-L222
+        # https://www.codesofinterest.com/2016/11/keras-image-dim-ordering.html
+        # if K.image_dim_ordering() == 'tf':
+        # if K.image_data_format() == 'channels_last':
+        if K.common.image_dim_ordering() == 'tf':
             self.axis = 3
         else:
             self.axis = 1
@@ -52,6 +57,7 @@ class L2Normalization(Layer):
         super(L2Normalization, self).__init__(**kwargs)
 
     def build(self, input_shape):
+        print('l2 normalize build', input_shape)
         self.input_spec = [InputSpec(shape=input_shape)]
         gamma = self.gamma_init * np.ones((input_shape[self.axis],))
         self.gamma = K.variable(gamma, name='{}_gamma'.format(self.name))
@@ -59,6 +65,7 @@ class L2Normalization(Layer):
         super(L2Normalization, self).build(input_shape)
 
     def call(self, x, mask=None):
+        print('l2 normalize call', x)
         output = K.l2_normalize(x, self.axis)
         return output * self.gamma
 
